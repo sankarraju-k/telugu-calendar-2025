@@ -1,2 +1,2 @@
 # Telugu Calendar 2025
-This is the web version of the Telugu Calendar app built using Flutter.
+Updated basic interactive UI for January 2025.

@@ -1,1 +1,65 @@
-<!DOCTYPE html><html><head><title>Telugu Calendar 2025</title></head><body><h1>Telugu Calendar 2025 Coming Soon!</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Telugu Calendar 2025</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    td:hover { background-color: #e6f2ff; cursor: pointer; }
+    .details { margin-top: 20px; padding: 10px; background: #fffbe6; border: 1px solid #e0c97f; }
+  </style>
+</head>
+<body>
+  <h1>Telugu Calendar - January 2025</h1>
+  <table>
+    <tr>
+      <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+    </tr>
+    <tr>
+      <td></td><td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td>
+    </tr>
+    <tr>
+      <td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
+    </tr>
+    <tr>
+      <td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td>
+    </tr>
+    <tr>
+      <td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td>
+    </tr>
+    <tr>
+      <td>26</td><td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td></td>
+    </tr>
+  </table>
+  <div class="details" id="details">
+    Click on a date to view Panchangam.
+  </div>
+
+  <script>
+    const panchangamData = {
+      "2025-01-01": { tithi: "Sukla Padyami", nakshatram: "Ashwini" },
+      "2025-01-14": { tithi: "Sankranti", nakshatram: "Uttarashada" },
+      "2025-01-26": { tithi: "Dasami", nakshatram: "Rohini" }
+    };
+
+    const cells = document.querySelectorAll("td");
+    cells.forEach(cell => {
+      cell.addEventListener("click", () => {
+        const day = cell.textContent;
+        const date = day.padStart(2, '0');
+        const key = `2025-01-${date}`;
+        const details = panchangamData[key];
+        const div = document.getElementById("details");
+        if (details) {
+          div.innerHTML = `<strong>${key}</strong><br>Tithi: ${details.tithi}<br>Nakshatram: ${details.nakshatram}`;
+        } else {
+          div.innerHTML = `<strong>${key}</strong><br>No Panchangam data available.`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
