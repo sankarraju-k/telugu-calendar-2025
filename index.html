@@ -1,155 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Telugu Calendar 2025</title>
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f0f0; color: #333; }
-  header { background-color: #004080; color: white; padding: 1rem; text-align: center; }
-  main { max-width: 800px; margin: 1rem auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-  select, button { padding: 0.5rem; margin: 0 0.5rem 1rem 0; font-size: 1rem; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-  th, td { border: 1px solid #ccc; padding: 0.6rem; text-align: center; }
-  th { background-color: #004080; color: white; }
-  td { cursor: pointer; }
-  td:hover { background-color: #cce5ff; }
-  .details { padding: 1rem; background: #e9f0ff; border-radius: 6px; }
-  .dark { background-color: #222; color: #eee; }
-  .dark table, .dark th, .dark td { border-color: #555; }
-  .dark th { background-color: #002b50; }
-  .dark td:hover { background-color: #0059b3; }
-  footer { text-align: center; margin: 2rem 0; font-size: 0.9rem; color: #666; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Telugu Calendar 2025</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<header>
   <h1>Telugu Calendar 2025</h1>
-  <label for="monthSelect">Month:</label>
-  <select id="monthSelect"></select>
-  <label for="langToggle">Language:</label>
-  <select id="langToggle">
-    <option value="en">English</option>
-    <option value="te">తెలుగు</option>
-  </select>
-  <button id="darkModeToggle">Toggle Dark Mode</button>
-</header>
-<main>
-  <table id="calendarTable" aria-label="Calendar">
-    <thead>
-      <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
-    </thead>
-    <tbody id="calendarBody"></tbody>
-  </table>
-  <div class="details" id="details">Click a date to see Panchangam details.</div>
-</main>
-<footer>© 2025 Telugu Calendar by sankarraju-k</footer>
-<script>
-const months = [
-  {en:"January", te:"జనవరి", days:31},
-  {en:"February", te:"ఫిబ్రవరి", days:28},
-  {en:"March", te:"మార్చి", days:31},
-  {en:"April", te:"ఏప్రిల్", days:30},
-  {en:"May", te:"మే", days:31},
-  {en:"June", te:"జూన్", days:30},
-  {en:"July", te:"జూలై", days:31},
-  {en:"August", te:"ఆగస్టు", days:31},
-  {en:"September", te:"సెప్టెంబర్", days:30},
-  {en:"October", te:"అక్టోబర్", days:31},
-  {en:"November", te:"నవంబర్", days:30},
-  {en:"December", te:"డిసెంబర్", days:31},
-];
-
-// Sample Panchangam data for demo (expand later for all days)
-const panchangamData = {
-  "2025-01-01": {tithi_en:"Sukla Padyami", tithi_te:"శుక్ల పాడ్యమి", nakshatram_en:"Ashwini", nakshatram_te:"అశ్విని"},
-  "2025-01-14": {tithi_en:"Sankranti", tithi_te:"సంక్రాంతి", nakshatram_en:"Uttarashada", nakshatram_te:"ఉత్తరాషాడ"},
-  "2025-01-26": {tithi_en:"Dasami", tithi_te:"దశమి", nakshatram_en:"Rohini", nakshatram_te:"రోహిణి"},
-  // Add more entries here for all days in 2025
-};
-
-const monthSelect = document.getElementById("monthSelect");
-const langToggle = document.getElementById("langToggle");
-const calendarBody = document.getElementById("calendarBody");
-const detailsDiv = document.getElementById("details");
-const darkModeToggle = document.getElementById("darkModeToggle");
-
-function getFirstDayOfMonth(year, month) {
-  return new Date(year, month, 1).getDay();
-}
-
-function renderCalendar(year, monthIndex, lang) {
-  calendarBody.innerHTML = "";
-  const month = months[monthIndex];
-  const firstDay = getFirstDayOfMonth(year, monthIndex);
-  const days = month.days;
-
-  let row = document.createElement("tr");
-  // Fill empty cells before first day
-  for (let i=0; i<firstDay; i++) {
-    let cell = document.createElement("td");
-    cell.textContent = "";
-    row.appendChild(cell);
-  }
-
-  for (let day=1; day<=days; day++) {
-    if ((firstDay + day - 1) % 7 === 0 && day !== 1) {
-      calendarBody.appendChild(row);
-      row = document.createElement("tr");
-    }
-    let cell = document.createElement("td");
-    cell.textContent = day;
-    cell.tabIndex = 0;
-    cell.setAttribute("role", "button");
-    cell.setAttribute("aria-label", `${lang === "en" ? months[monthIndex].en : months[monthIndex].te} ${day} 2025`);
-    cell.onclick = () => showDetails(year, monthIndex, day, lang);
-    cell.onkeypress = (e) => { if (e.key === "Enter") showDetails(year, monthIndex, day, lang); };
-    row.appendChild(cell);
-  }
-  calendarBody.appendChild(row);
-  document.querySelector("header h1").textContent = lang === "en" ? `Telugu Calendar 2025 - ${month.en}` : `తెలుగు క్యాలెండర్ 2025 - ${month.te}`;
-  detailsDiv.textContent = lang === "en" ? "Click a date to see Panchangam details." : "పంచాంగం వివరాల కోసం తేదీని క్లిక్ చేయండి.";
-}
-
-function showDetails(year, monthIndex, day, lang) {
-  const month = months[monthIndex];
-  const mm = (monthIndex + 1).toString().padStart(2, "0");
-  const dd = day.toString().padStart(2, "0");
-  const key = `${year}-${mm}-${dd}`;
-  const data = panchangamData[key];
-
-  if (data) {
-    detailsDiv.innerHTML = `
-      <strong>${lang === "en" ? months[monthIndex].en : months[monthIndex].te} ${day}, 2025</strong><br/>
-      ${lang === "en" ? "Tithi" : "తిథి"}: ${lang === "en" ? data.tithi_en : data.tithi_te}<br/>
-      ${lang === "en" ? "Nakshatram" : "నక్షత్రం"}: ${lang === "en" ? data.nakshatram_en : data.nakshatram_te}
-    `;
-  } else {
-    detailsDiv.textContent = lang === "en" ? "No Panchangam data available for this date." : "ఈ తేదీకి పంచాంగం సమాచారం లేదు.";
-  }
-}
-
-monthSelect.addEventListener("change", () => {
-  renderCalendar(2025, monthSelect.value, langToggle.value);
-});
-langToggle.addEventListener("change", () => {
-  renderCalendar(2025, monthSelect.value, langToggle.value);
-});
-darkModeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-});
-
-// Initialize month selector
-months.forEach((m, i) => {
-  let option = document.createElement("option");
-  option.value = i;
-  option.textContent = m.en;
-  monthSelect.appendChild(option);
-});
-
-// Initialize calendar
-monthSelect.value = 0;
-renderCalendar(2025, 0, "en");
-</script>
+  <label for="citySelect">Choose a city:</label>
+  <select id="citySelect"></select>
+  <div id="calendar"></div>
+  <div id="details"></div>
+  <script src="script.js"></script>
 </body>
 </html>

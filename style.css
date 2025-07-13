@@ -1,0 +1,12 @@
+
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+#calendar div {
+  margin-bottom: 20px;
+}
+button {
+  margin: 2px;
+  padding: 5px 10px;
+}
