@@ -4,7 +4,5 @@ A simple web calendar showing Telugu Panchangam details for 2025. Use the drop-d
 
 Each month also has its own page under the `*.html` files.
 
-The app fetches details from `https://telugu-calendar-live.onrender.com/panchang`.
-If that service is unavailable, it falls back to a small bundled
-`panchangam_2025.json` file for demo data and shows an error when neither source
-is reachable.
+The app fetches details from `https://telugu-calendar-live.onrender.com/panchang`.  
+If that service is unavailable, it falls back to a small bundled `panchangam_2025.json` file for demo data and shows an error when neither source is reachable.
