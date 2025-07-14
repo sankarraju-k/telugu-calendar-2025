@@ -50,7 +50,7 @@ async function showDetails(day, month, year) {
   const details = document.getElementById("details");
   details.innerHTML = "Loading…";
   try {
-    const response = await fetch("https://telugu-calendar-proxy.onrender.com/panchang", {
+    const response = await fetch("https://telugu-calendar-api.onrender.com/panchang", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
