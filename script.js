@@ -1,5 +1,4 @@
 
-const apiKey = 'lkCBPgstBCazURzonjuI98NmlZU9GfCF3gdKc61f';
 const cities = {
   "Hyderabad": { lat: 17.385, lon: 78.4867, tz: 5.5 },
   "Chennai": { lat: 13.0827, lon: 80.2707, tz: 5.5 },
@@ -51,7 +50,7 @@ async function showDetails(day, month, year) {
   const details = document.getElementById("details");
   details.innerHTML = "Loading…";
   try {
-    const response = await fetch("https://telugu-calendar-api.onrender.com/panchang", {
+    const response = await fetch("https://telugu-calendar-backend.onrender.com/panchang", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
