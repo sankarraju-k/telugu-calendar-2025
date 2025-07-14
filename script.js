@@ -45,26 +45,34 @@ function loadCalendar(year) {
   }
 }
 
+const API_URL = "https://telugu-calendar-live.onrender.com/panchang";
+
 async function showDetails(day, month, year) {
   const { lat, lon, tz } = cities[selectedCity];
   const details = document.getElementById("details");
   details.innerHTML = "Loading…";
   try {
-    const response = await fetch("https://telugu-calendar-live.onrender.com/panchang", {
-
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ day, month, year, lat, lon, tzone: tz })
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     const data = await response.json();
+
     if (data.tithi) {
+      const nakshatra = data.nakshatra || data.nakshatram || "";
+      const rahu = data.rahu_kalam || data.rahukalam || "";
+
       details.innerHTML = `
         <h3>${selectedCity} — ${day}-${month}-${year}</h3>
         <p><strong>Tithi:</strong> ${data.tithi}</p>
-        <p><strong>Nakshatra:</strong> ${data.nakshatra}</p>
-        <p><strong>Rahu Kalam:</strong> ${data.rahu_kalam}</p>`;
+        <p><strong>Nakshatra:</strong> ${nakshatra}</p>
+        ${rahu ? `<p><strong>Rahu Kalam:</strong> ${rahu}</p>` : ""}`;
     } else {
       details.innerHTML = "No Panchangam data found.";
     }
