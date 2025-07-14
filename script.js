@@ -45,31 +45,58 @@ function loadCalendar(year) {
   }
 }
 
+const API_URL = "https://telugu-calendar-live.onrender.com/panchang";
+const LOCAL_DATA_URL = "panchangam_2025.json";
+
+function renderPanchangam(data, day, month, year) {
+  const details = document.getElementById("details");
+  const nakshatra = data.nakshatra || data.nakshatram || "";
+  const rahu = data.rahu_kalam || data.rahukalam || "";
+
+  details.innerHTML = `
+    <h3>${selectedCity} — ${day}-${month}-${year}</h3>
+    <p><strong>Tithi:</strong> ${data.tithi || ""}</p>
+    <p><strong>Nakshatra:</strong> ${nakshatra}</p>
+    ${rahu ? `<p><strong>Rahu Kalam:</strong> ${rahu}</p>` : ""}`;
+}
+
 async function showDetails(day, month, year) {
   const { lat, lon, tz } = cities[selectedCity];
   const details = document.getElementById("details");
   details.innerHTML = "Loading…";
   try {
-    const response = await fetch("https://telugu-calendar-live.onrender.com/panchang", {
-
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ day, month, year, lat, lon, tzone: tz })
     });
-    const data = await response.json();
-    if (data.tithi) {
-      details.innerHTML = `
-        <h3>${selectedCity} — ${day}-${month}-${year}</h3>
-        <p><strong>Tithi:</strong> ${data.tithi}</p>
-        <p><strong>Nakshatra:</strong> ${data.nakshatra}</p>
-        <p><strong>Rahu Kalam:</strong> ${data.rahu_kalam}</p>`;
-    } else {
-      details.innerHTML = "No Panchangam data found.";
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+    const data = await response.json();
+
+    if (data.tithi) {
+      renderPanchangam(data, day, month, year);
+      return;
+    }
+    throw new Error("No data");
   } catch (err) {
-    console.error(err);
-    details.innerHTML = "Error fetching Panchangam.";
+    console.error("API fetch failed", err);
+    try {
+      const res = await fetch(LOCAL_DATA_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const local = await res.json();
+      const key = `${String(day).padStart(2, "0")}-${String(month).padStart(2, "0")}-${year}`;
+      if (local[key]) {
+        renderPanchangam(local[key], day, month, year);
+      } else {
+        details.innerHTML = "No Panchangam data found.";
+      }
+    } catch (e) {
+      console.error("Local data load failed", e);
+      details.innerHTML = "Error fetching Panchangam.";
+    }
   }
 }
