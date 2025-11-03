@@ -1,18 +1,57 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mana Telugu Panchangam 2025</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Mana Telugu Panchangam 2025</h1>
-  <label for="citySelect">Choose a city:</label>
-  <select id="citySelect"></select>
-  <div id="calendar"></div>
-  <div id="details"></div>
+  <header class="hero">
+    <div class="hero__content">
+      <h1>Mana Telugu Panchangam 2025</h1>
+      <p>Daily tithi, nakshatram, rahu kalam timings and festival highlights inspired by the Prokerala layout.</p>
+    </div>
+    <div class="hero__controls">
+      <label for="citySelect" class="visually-hidden">Choose a city</label>
+      <select id="citySelect" class="control"></select>
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="Previous month">&#9664;</button>
+        <div>
+          <h2 id="monthLabel"></h2>
+          <span id="timezoneLabel"></span>
+        </div>
+        <button id="nextMonth" aria-label="Next month">&#9654;</button>
+      </div>
+      <button id="todayBtn" class="control">Today</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="calendar-panel" aria-live="polite">
+      <div class="legend">
+        <span class="legend__item"><span class="dot dot--today"></span> Today</span>
+        <span class="legend__item"><span class="dot dot--festival"></span> Festival</span>
+      </div>
+      <div id="calendar" class="calendar"></div>
+    </section>
+
+    <aside class="info-panel">
+      <article id="details" class="card">
+        <h3>Select a date</h3>
+        <p>The Panchangam details for the chosen date appear here.</p>
+      </article>
+      <article class="card" id="festivalCard">
+        <h3>Festival Highlights</h3>
+        <ul id="festivalList"></ul>
+      </article>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <p>Data is fetched live when available and falls back to the bundled Panchangam dataset.</p>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 </html>
