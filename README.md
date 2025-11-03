@@ -9,7 +9,7 @@ If that service is unavailable, it falls back to a small bundled `panchangam_202
 
 ## Quick start (no coding required)
 
-1. Click the green **Code** button on GitHub and choose **Download ZIP**.
+1. Open this project on GitHub in your web browser. In the upper-right corner of the file list you will see a green **Code** button—click it and choose **Download ZIP**.
 2. Unzip the folder somewhere easy to find (for example, your Desktop).
 3. Open the unzipped folder and double-click the start file for your computer:
    - **Windows:** `start-server.bat`
