@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mana Telugu Panchangam 2025</title>
+  <title>Mana Telugu Panchangam</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="hero">
     <div class="hero__content">
-      <h1>Mana Telugu Panchangam 2025</h1>
-      <p>Daily tithi, nakshatram, rahu kalam timings and festival highlights inspired by the Prokerala layout.</p>
+      <h1>Mana Telugu Panchangam</h1>
+      <p>
+        Explore day-wise tithi, nakshatram, rahu kalam timings, and festival highlights across any
+        year in a Prokerala-inspired layout.
+      </p>
     </div>
     <div class="hero__controls">
       <label for="citySelect" class="visually-hidden">Choose a city</label>
       <select id="citySelect" class="control"></select>
       <div class="month-nav">
         <button id="prevMonth" aria-label="Previous month">&#9664;</button>
-        <div>
+        <div class="month-nav__labels">
           <h2 id="monthLabel"></h2>
           <span id="timezoneLabel"></span>
         </div>
         <button id="nextMonth" aria-label="Next month">&#9654;</button>
+      </div>
+      <div class="year-nav">
+        <button id="prevYear" aria-label="Previous year">&#9664;</button>
+        <span id="yearLabel" aria-live="polite"></span>
+        <button id="nextYear" aria-label="Next year">&#9654;</button>
       </div>
       <button id="todayBtn" class="control">Today</button>
     </div>

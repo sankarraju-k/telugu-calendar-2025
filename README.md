@@ -1,11 +1,11 @@
-# Mana Telugu Panchangam 2025
+# Mana Telugu Panchangam
 
-A simple web calendar showing Telugu Panchangam details for 2025. Use the drop-down on the main page to select your city and click a date to fetch that day’s Panchangam information from the public API.
+A simple web calendar showing Telugu Panchangam details for any year. Use the city drop-down, month arrows, and new year controls on the main page to browse historic dates or jump ahead to future years such as 2026. Click a date to fetch that day’s Panchangam information from the public API.
 
 Each month also has its own page under the `*.html` files.
 
 The app fetches details from `https://telugu-calendar-live.onrender.com/panchang`.
-If that service is unavailable, it falls back to a small bundled `panchangam_2025.json` file for demo data and shows an error when neither source is reachable.
+If that service is unavailable, it falls back to the bundled `panchangam_2025.json` file for 2025-specific demo data and shows an error when neither source is reachable.
 
 ## Quick start (no coding required)
 

@@ -1,6 +1,10 @@
 const API_URL = "https://telugu-calendar-live.onrender.com/panchang";
-const LOCAL_DATA_URL = "panchangam_2025.json";
-const BASE_YEAR = 2025;
+const LOCAL_DATA_FILES = {
+  2025: "panchangam_2025.json"
+};
+const DEFAULT_YEAR = 2025;
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2100;
 
 const cities = {
   Hyderabad: { lat: 17.385, lon: 78.4867, tz: 5.5 },
@@ -55,12 +59,13 @@ const festivalData = {
 };
 
 let selectedCity = "Hyderabad";
+let currentYear = DEFAULT_YEAR;
 let currentMonth = 0;
-let localPanchangam = {};
-let localDataReady = false;
+const localPanchangamCache = {};
+const localDataRequests = {};
 
 const today = new Date();
-if (today.getFullYear() === BASE_YEAR) {
+if (today.getFullYear() === DEFAULT_YEAR) {
   currentMonth = today.getMonth();
 }
 
@@ -72,15 +77,21 @@ const monthLabelEl = document.getElementById("monthLabel");
 const timezoneLabelEl = document.getElementById("timezoneLabel");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
+const prevYearBtn = document.getElementById("prevYear");
+const nextYearBtn = document.getElementById("nextYear");
+const yearLabelEl = document.getElementById("yearLabel");
 const todayBtn = document.getElementById("todayBtn");
 
 function init() {
   populateCities();
   attachEventHandlers();
-  prefetchLocalData();
-  renderCalendar(BASE_YEAR, currentMonth);
-  if (today.getFullYear() === BASE_YEAR) {
-    showDetails(today.getDate(), today.getMonth() + 1, BASE_YEAR);
+  renderCalendar(currentYear, currentMonth);
+  ensureLocalData(DEFAULT_YEAR);
+  if (currentYear !== DEFAULT_YEAR) {
+    ensureLocalData(currentYear);
+  }
+  if (today.getFullYear() === currentYear) {
+    showDetails(today.getDate(), today.getMonth() + 1, currentYear);
   }
 }
 
@@ -99,31 +110,70 @@ function attachEventHandlers() {
   citySelectEl.addEventListener("change", () => {
     selectedCity = citySelectEl.value;
     updateTimezoneLabel();
-    renderCalendar(BASE_YEAR, currentMonth);
+    renderCalendar(currentYear, currentMonth);
   });
 
   prevMonthBtn.addEventListener("click", () => changeMonth(-1));
   nextMonthBtn.addEventListener("click", () => changeMonth(1));
+  prevYearBtn.addEventListener("click", () => changeYear(-1));
+  nextYearBtn.addEventListener("click", () => changeYear(1));
   todayBtn.addEventListener("click", () => {
-    if (today.getFullYear() === BASE_YEAR) {
-      currentMonth = today.getMonth();
-      renderCalendar(BASE_YEAR, currentMonth);
-      showDetails(today.getDate(), today.getMonth() + 1, BASE_YEAR);
-    } else {
-      currentMonth = 0;
-      renderCalendar(BASE_YEAR, currentMonth);
-      detailsEl.innerHTML = `<h3>${MONTHS[currentMonth]} ${BASE_YEAR}</h3><p>Today's Panchangam is available only for 2025 in this demo.</p>`;
-    }
+    currentYear = clampYear(today.getFullYear());
+    currentMonth = today.getMonth();
+    renderCalendar(currentYear, currentMonth);
+    ensureLocalData(currentYear);
+    showDetails(today.getDate(), today.getMonth() + 1, currentYear);
   });
 }
 
 function changeMonth(delta) {
-  currentMonth = (currentMonth + delta + 12) % 12;
-  renderCalendar(BASE_YEAR, currentMonth);
+  let newMonth = currentMonth + delta;
+  let newYear = currentYear;
+
+  while (newMonth < 0) {
+    newMonth += 12;
+    newYear -= 1;
+  }
+
+  while (newMonth > 11) {
+    newMonth -= 12;
+    newYear += 1;
+  }
+
+  if (newYear < MIN_YEAR || newYear > MAX_YEAR) {
+    return;
+  }
+
+  currentYear = newYear;
+  currentMonth = newMonth;
+  renderCalendar(currentYear, currentMonth);
+  ensureLocalData(currentYear);
 }
 
-function prefetchLocalData() {
-  fetch(LOCAL_DATA_URL)
+function changeYear(delta) {
+  const desiredYear = currentYear + delta;
+  const clampedYear = clampYear(desiredYear);
+
+  if (clampedYear === currentYear) {
+    return;
+  }
+
+  currentYear = clampedYear;
+  renderCalendar(currentYear, currentMonth);
+  ensureLocalData(currentYear);
+}
+
+function ensureLocalData(year) {
+  const dataUrl = LOCAL_DATA_FILES[year];
+  if (!dataUrl || localPanchangamCache[year]) {
+    return Promise.resolve();
+  }
+
+  if (localDataRequests[year]) {
+    return localDataRequests[year];
+  }
+
+  const request = fetch(dataUrl)
     .then((res) => {
       if (!res.ok) {
         throw new Error(res.statusText);
@@ -131,18 +181,26 @@ function prefetchLocalData() {
       return res.json();
     })
     .then((json) => {
-      localPanchangam = json;
-      localDataReady = true;
-      renderCalendar(BASE_YEAR, currentMonth);
+      localPanchangamCache[year] = json;
+      if (currentYear === year) {
+        renderCalendar(currentYear, currentMonth);
+      }
     })
     .catch((err) => {
-      console.warn("Failed to load local Panchangam cache", err);
+      console.warn(`Failed to load local Panchangam cache for ${year}`, err);
+    })
+    .finally(() => {
+      delete localDataRequests[year];
     });
+
+  localDataRequests[year] = request;
+  return request;
 }
 
 function renderCalendar(year, month) {
   calendarEl.innerHTML = "";
-  monthLabelEl.textContent = `${MONTHS[month]} ${year}`;
+  monthLabelEl.textContent = MONTHS[month];
+  updateYearLabel();
   updateTimezoneLabel();
 
   WEEKDAYS.forEach((day) => {
@@ -154,6 +212,7 @@ function renderCalendar(year, month) {
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const yearCache = localPanchangamCache[year] || {};
 
   for (let i = 0; i < firstDay; i++) {
     const empty = document.createElement("div");
@@ -165,7 +224,7 @@ function renderCalendar(year, month) {
   const festivalHighlights = [];
   for (let date = 1; date <= daysInMonth; date++) {
     const key = formatKey(date, month + 1, year);
-    const local = localDataReady ? localPanchangam[key] : null;
+    const local = yearCache[key];
     const festivals = festivalData[key];
 
     const cell = document.createElement("button");
@@ -232,6 +291,12 @@ function formatKey(day, month, year) {
 function updateTimezoneLabel() {
   const { tz } = cities[selectedCity];
   timezoneLabelEl.textContent = `UTC ${formatTimezoneOffset(tz)}`;
+}
+
+function updateYearLabel() {
+  yearLabelEl.textContent = currentYear;
+  prevYearBtn.disabled = currentYear <= MIN_YEAR;
+  nextYearBtn.disabled = currentYear >= MAX_YEAR;
 }
 
 function formatTimezoneOffset(offset) {
@@ -308,15 +373,22 @@ async function showDetails(day, month, year) {
 
 function fallbackToLocalData(day, month, year) {
   const key = formatKey(day, month, year);
-  if (localPanchangam[key]) {
-    renderPanchangam(localPanchangam[key], day, month, year);
-  } else {
-    detailsEl.innerHTML = `
-      <h3>${selectedCity}</h3>
-      <h4>${MONTHS[month - 1]} ${day}, ${year}</h4>
-      <p>No Panchangam data found for this date.</p>
-    `;
-  }
+  ensureLocalData(year).finally(() => {
+    const cache = localPanchangamCache[year];
+    if (cache && cache[key]) {
+      renderPanchangam(cache[key], day, month, year);
+    } else {
+      detailsEl.innerHTML = `
+        <h3>${selectedCity}</h3>
+        <h4>${MONTHS[month - 1]} ${day}, ${year}</h4>
+        <p>No Panchangam data found for this date.</p>
+      `;
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+function clampYear(year) {
+  return Math.min(Math.max(year, MIN_YEAR), MAX_YEAR);
+}

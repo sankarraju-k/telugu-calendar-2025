@@ -86,6 +86,12 @@ body {
   gap: 1rem;
 }
 
+.month-nav__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .month-nav h2 {
   margin: 0;
   font-size: 1.5rem;
@@ -97,6 +103,36 @@ body {
   color: rgba(255, 255, 255, 0.75);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.year-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.year-nav button {
+  font: inherit;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.year-nav button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .layout {
