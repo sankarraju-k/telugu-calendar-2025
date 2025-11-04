@@ -62,7 +62,46 @@ let selectedCity = "Hyderabad";
 let currentYear = DEFAULT_YEAR;
 let currentMonth = 0;
 const localPanchangamCache = {};
+const remotePanchangamCache = {};
 const localDataRequests = {};
+
+const DETAIL_FIELD_CONFIG = [
+  { keys: ["tithi"], label: "Tithi" },
+  { keys: ["paksha"], label: "Paksham" },
+  { keys: ["month_name", "lunar_month"], label: "Lunar Month" },
+  { keys: ["nakshatra", "nakshatram"], label: "Nakshatram" },
+  { keys: ["yoga"], label: "Yoga" },
+  { keys: ["karana"], label: "Karana" },
+  { keys: ["sunrise"], label: "Sunrise" },
+  { keys: ["sunrise_tomorrow"], label: "Tomorrow's Sunrise" },
+  { keys: ["sunset"], label: "Sunset" },
+  { keys: ["sunset_tomorrow"], label: "Tomorrow's Sunset" },
+  { keys: ["moonrise"], label: "Moonrise" },
+  { keys: ["moonset"], label: "Moonset" },
+  { keys: ["rahukalam", "rahu_kalam"], label: "Rahu Kalam" },
+  { keys: ["yamagandam"], label: "Yamagandam" },
+  { keys: ["gulika", "gulika_kalam"], label: "Gulika Kalam" },
+  { keys: ["abhijit_muhurta", "abhijit_muhurtam"], label: "Abhijit Muhurtham" },
+  { keys: ["durmuhurtham", "durmuhurtam"], label: "Durmuhurtham" },
+  { keys: ["varjyam"], label: "Varjyam" },
+  { keys: ["amritadi_yoga"], label: "Amritadi Yoga" },
+  { keys: ["good_time", "auspicious_time", "auspicious_period"], label: "Shubha Timings" },
+  { keys: ["bad_time", "inauspicious_time", "inauspicious_period"], label: "Ashubha Timings" },
+  { keys: ["festival_list", "festival", "festivals"], label: "Festivals" },
+  { keys: ["notes"], label: "Notes" }
+];
+
+const DETAIL_IGNORE_KEYS = new Set([
+  "day",
+  "month",
+  "year",
+  "lat",
+  "lon",
+  "tzone",
+  "timezone",
+  "city",
+  "location"
+]);
 
 const today = new Date();
 if (today.getFullYear() === DEFAULT_YEAR) {
@@ -213,6 +252,7 @@ function renderCalendar(year, month) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const yearCache = localPanchangamCache[year] || {};
+  const cityCache = remotePanchangamCache[selectedCity] || {};
 
   for (let i = 0; i < firstDay; i++) {
     const empty = document.createElement("div");
@@ -225,7 +265,11 @@ function renderCalendar(year, month) {
   for (let date = 1; date <= daysInMonth; date++) {
     const key = formatKey(date, month + 1, year);
     const local = yearCache[key];
-    const festivals = festivalData[key];
+    const remote = cityCache[key];
+    const combinedFestivals = new Set();
+    (festivalData[key] || []).forEach((fest) => combinedFestivals.add(fest));
+    collectFestivalsFromData(remote || local).forEach((fest) => combinedFestivals.add(fest));
+    const festivalArray = Array.from(combinedFestivals);
 
     const cell = document.createElement("button");
     cell.className = "day";
@@ -239,25 +283,32 @@ function renderCalendar(year, month) {
     if (isToday) {
       cell.classList.add("day--today");
     }
-    if (festivals) {
+    if (festivalArray.length) {
       cell.classList.add("day--festival");
-      festivals.forEach((fest) => {
+      festivalArray.forEach((fest) => {
         festivalHighlights.push({ day: date, name: fest });
       });
     }
 
     const meta = [];
-    if (local?.tithi) {
-      meta.push(local.tithi);
+    const metaSource = remote || local || {};
+    const tithi = metaSource.tithi || metaSource.thithi || metaSource.tidhi;
+    if (tithi) {
+      meta.push(String(tithi));
     }
-    if (local?.nakshatra || local?.nakshatram) {
-      meta.push(local.nakshatra || local.nakshatram);
+    const nakshatra = metaSource.nakshatra || metaSource.nakshatram;
+    if (nakshatra) {
+      meta.push(String(nakshatra));
+    }
+    const sunrise = metaSource.sunrise;
+    if (sunrise) {
+      meta.push(`Sunrise ${sunrise}`);
     }
 
     cell.innerHTML = `
       <span class="day__date">${date}</span>
       <span class="day__meta">${meta.join(" · ")}</span>
-      ${festivals ? `<span class="day__festival">${festivals[0]}</span>` : ""}
+      ${festivalArray.length ? `<span class="day__festival">${festivalArray[0]}</span>` : ""}
     `;
 
     cell.addEventListener("click", () => showDetails(date, month + 1, year));
@@ -307,23 +358,137 @@ function formatTimezoneOffset(offset) {
   return `${sign}${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-function renderPanchangam(data, day, month, year) {
+function formatDetailLabel(key) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .replace(/\bOf\b/g, "of");
+}
+
+function hasUsefulValue(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => hasUsefulValue(item));
+  }
+  if (typeof value === "object") {
+    return Object.values(value).some((val) => hasUsefulValue(val));
+  }
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+  return true;
+}
+
+function normalizeFieldValue(value) {
+  if (!hasUsefulValue(value)) {
+    return "";
+  }
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => hasUsefulValue(item))
+      .map((item) => normalizeFieldValue(item))
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    return Object.entries(value)
+      .filter(([, val]) => hasUsefulValue(val))
+      .map(([key, val]) => `${formatDetailLabel(key)}: ${normalizeFieldValue(val)}`)
+      .join("<br>");
+  }
+  return String(value).replace(/\n/g, "<br>");
+}
+
+function collectFestivalsFromData(data) {
+  if (!data || typeof data !== "object") {
+    return [];
+  }
+
+  const containers = [];
+  ["festival_list", "festivals", "festival"].forEach((key) => {
+    if (hasUsefulValue(data[key])) {
+      containers.push(data[key]);
+    }
+  });
+
+  if (!containers.length) {
+    return [];
+  }
+
+  const normalized = [];
+  containers.forEach((value) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (hasUsefulValue(item)) {
+          normalized.push(String(item).trim());
+        }
+      });
+      return;
+    }
+    if (typeof value === "object") {
+      Object.values(value).forEach((item) => {
+        if (hasUsefulValue(item)) {
+          normalized.push(String(item).trim());
+        }
+      });
+      return;
+    }
+    String(value)
+      .split(/[,\n]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => normalized.push(part));
+  });
+
+  return Array.from(new Set(normalized));
+}
+
+function renderPanchangam(data, day, month, year, options = {}) {
   const key = formatKey(day, month, year);
-  const festivals = festivalData[key];
   const title = `${MONTHS[month - 1]} ${day}, ${year}`;
 
-  const fields = [
-    { label: "Tithi", value: data.tithi },
-    { label: "Nakshatram", value: data.nakshatra || data.nakshatram },
-    { label: "Yoga", value: data.yoga },
-    { label: "Karana", value: data.karana },
-    { label: "Sunrise", value: data.sunrise },
-    { label: "Sunset", value: data.sunset },
-    { label: "Rahu Kalam", value: data.rahu_kalam || data.rahukalam },
-    { label: "Yamagandam", value: data.yamagandam },
-    { label: "Durmuhurtham", value: data.durmuhurtham || data.durmuhurtam }
-  ].filter((item) => Boolean(item.value));
+  const festivalSet = new Set();
+  const fallbackFestivals = festivalData[key] || [];
+  fallbackFestivals.forEach((fest) => festivalSet.add(fest));
+  collectFestivalsFromData(data).forEach((fest) => festivalSet.add(fest));
 
+  const fields = [];
+  const consumedKeys = new Set();
+
+  DETAIL_FIELD_CONFIG.forEach((config) => {
+    const activeKey = config.keys.find((fieldKey) => hasUsefulValue(data[fieldKey]));
+    if (!activeKey) {
+      return;
+    }
+
+    consumedKeys.add(activeKey);
+    config.keys.forEach((keyVariant) => consumedKeys.add(keyVariant));
+
+    const rawValue = data[activeKey];
+    if (config.label === "Festivals") {
+      return;
+    }
+
+    const label = config.label || formatDetailLabel(activeKey);
+    const value = normalizeFieldValue(rawValue);
+    if (value) {
+      fields.push({ label, value });
+    }
+  });
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (consumedKeys.has(key) || DETAIL_IGNORE_KEYS.has(key)) {
+      return;
+    }
+    const normalizedValue = normalizeFieldValue(value);
+    if (!normalizedValue) {
+      return;
+    }
+    fields.push({ label: formatDetailLabel(key), value: normalizedValue });
+  });
+
+  const festivals = Array.from(festivalSet);
   const fieldMarkup = fields
     .map(
       (field) => `
@@ -333,18 +498,28 @@ function renderPanchangam(data, day, month, year) {
     )
     .join("");
   const fallbackMarkup = "<dt>Info</dt><dd>No Panchangam data available.</dd>";
+  const noticeMarkup = options.notice ? `<p class="details__notice">${options.notice}</p>` : "";
 
   detailsEl.innerHTML = `
     <h3>${selectedCity}</h3>
     <h4>${title}</h4>
-    ${festivals ? `<p class="day__festival">${festivals.join(", ")}</p>` : ""}
+    ${noticeMarkup}
+    ${festivals.length ? `<p class="day__festival">${festivals.join(", ")}</p>` : ""}
     <dl>${fieldMarkup || fallbackMarkup}</dl>
   `;
 }
 
 async function showDetails(day, month, year) {
   const { lat, lon, tz } = cities[selectedCity];
+  const key = formatKey(day, month, year);
   detailsEl.innerHTML = `<h3>${selectedCity}</h3><p>Loading Panchangam…</p>`;
+
+  const cityCache = remotePanchangamCache[selectedCity] || (remotePanchangamCache[selectedCity] = {});
+  const cached = cityCache[key];
+  if (cached) {
+    renderPanchangam(cached, day, month, year, { source: "remote" });
+    return;
+  }
 
   try {
     const response = await fetch(API_URL, {
@@ -360,8 +535,10 @@ async function showDetails(day, month, year) {
     }
 
     const data = await response.json();
-    if (data && data.tithi) {
-      renderPanchangam(data, day, month, year);
+    if (data && typeof data === "object") {
+      const stored = { ...data };
+      cityCache[key] = stored;
+      renderPanchangam(stored, day, month, year, { source: "remote" });
       return;
     }
     throw new Error("No Panchangam data returned from API");
@@ -376,7 +553,11 @@ function fallbackToLocalData(day, month, year) {
   ensureLocalData(year).finally(() => {
     const cache = localPanchangamCache[year];
     if (cache && cache[key]) {
-      renderPanchangam(cache[key], day, month, year);
+      const localCopy = { ...cache[key] };
+      renderPanchangam(localCopy, day, month, year, {
+        source: "local",
+        notice: "Showing offline 2025 demo data while the live service is unreachable."
+      });
     } else {
       detailsEl.innerHTML = `
         <h3>${selectedCity}</h3>

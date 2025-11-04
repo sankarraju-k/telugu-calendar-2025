@@ -4,8 +4,11 @@ A simple web calendar showing Telugu Panchangam details for any year. Use the ci
 
 Each month also has its own page under the `*.html` files.
 
-The app fetches details from `https://telugu-calendar-live.onrender.com/panchang`.
-If that service is unavailable, it falls back to the bundled `panchangam_2025.json` file for 2025-specific demo data and shows an error when neither source is reachable.
+## Panchangam data coverage
+
+- The calendar requests daily data from `https://telugu-calendar-live.onrender.com/panchang`. When that API responds, the detail card lists every timing supplied (tithi, nakshatram, sunrise, sunset, rahukalam, durmuhurtham, varjyam, etc.) and any festival notes for the selected city.
+- Successful lookups are cached per city so flipping between dates is instant and the month grid can surface sunrise and festival highlights that were already fetched.
+- If the API cannot be reached, the app falls back to the bundled `panchangam_2025.json` file so January–December 2025 still display sample tithi/nakshatra and basic timings. A message appears when neither the live service nor the local cache have information for that day.
 
 ## Quick start (no coding required)
 
